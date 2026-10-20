@@ -147,6 +147,17 @@ async function main() {
   }
 
   process.stdout.write('Staging the desktop app\n');
+
+  /*
+   * The icon is generated rather than committed: the repository holds source
+   * only, and a PNG/ICNS can be reproduced exactly from scripts/make-icon.mjs.
+   */
+  await run(process.execPath, [path.join(projectRoot, 'scripts', 'make-icon.mjs')], {
+    cwd: projectRoot,
+  }).catch((error) => {
+    process.stdout.write(`  icon generation failed (${error instanceof Error ? error.message : String(error)}) — packaging will use Electron's default\n`);
+  });
+
   await stage();
 
   /*
