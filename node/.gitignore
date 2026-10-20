@@ -1,0 +1,18 @@
+# Dependencies are dev-only (TypeScript, Electron, packaging tools). None of them
+# are needed to *run* the annotator from source.
+node_modules/
+
+# Local npm cache used when the shared cache is not writable.
+.npm-cache/
+
+*.log
+.DS_Store
+
+# Build output. See PACKAGING.md if you want to reproduce these.
+dist/
+dist-desktop/
+# Leftover from a build whose output path resolved inside this folder, and from
+# a sandbox that wrote parts of it as root. Never part of the project.
+dist-rootjunk/
+# Electron packaging staging directory.
+.desktop-stage/

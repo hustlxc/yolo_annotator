@@ -1,0 +1,34 @@
+{
+  "name": "yolo-annotator",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Cross-platform YOLO bounding-box annotator (TypeScript, zero runtime dependencies)",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "bin": {
+    "yolo-annotator": "./bin/yolo-annotator.mjs"
+  },
+  "scripts": {
+    "start": "node src/server/main.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test",
+    "check": "npm run typecheck && npm test",
+    "package": "node scripts/build-standalone.mjs",
+    "package:mac": "node scripts/build-standalone.mjs --target mac",
+    "package:win": "node scripts/build-standalone.mjs --target win",
+    "desktop": "electron src/desktop/main.cjs",
+    "package:desktop": "node scripts/build-desktop.mjs",
+    "package:desktop:mac": "node scripts/build-desktop.mjs --mac",
+    "package:desktop:win": "node scripts/build-desktop.mjs --win"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "electron": "^44.7.2",
+    "electron-builder": "^26.15.3",
+    "postject": "^1.0.0-alpha.6",
+    "typescript": "^5.7.2"
+  }
+}

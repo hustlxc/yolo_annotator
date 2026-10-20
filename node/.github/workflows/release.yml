@@ -1,0 +1,107 @@
+# Builds click-installable packages for macOS and Windows.
+#
+# Both platforms can now be built anywhere, because NSIS (the Windows installer
+# compiler) runs on macOS and Linux as well as Windows. This workflow exists to
+# produce all four artifacts in one place and attach them to a release.
+#
+# Run it from the Actions tab (workflow_dispatch) or by pushing a tag like v2.0.0.
+name: release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14          # Apple Silicon
+            label: macOS (arm64)
+            target: mac
+          - os: windows-latest
+            label: Windows (x64)
+            target: win
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install dev dependencies
+        working-directory: node
+        run: npm install --no-audit --no-fund
+
+      - name: Type check and test
+        working-directory: node
+        run: npm run check
+
+      - name: Build the app bundle
+        working-directory: node
+        run: node scripts/build-standalone.mjs --target ${{ matrix.target }}
+
+      # ---------------------------------------------------------------- macOS
+      - name: Create the disk image
+        if: matrix.target == 'mac'
+        working-directory: node
+        run: |
+          # build-standalone.mjs already tries this and falls back to a zip when
+          # hdiutil cannot mount a volume; retry here so the log says why.
+          hdiutil create -volname "YOLO Annotator" \
+            -srcfolder "dist/YOLO Annotator.app" \
+            -ov -format UDZO "dist/YOLO-Annotator.dmg" || \
+            echo "dmg creation unavailable; the zip in dist/ is the artifact"
+
+      # -------------------------------------------------------------- Windows
+      - name: Install Inno Setup
+        if: matrix.target == 'win'
+        run: choco install innosetup --no-progress -y
+
+      - name: Build the Windows installer
+        if: matrix.target == 'win'
+        working-directory: node
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" `
+            "/DAppVersion=$version" "packaging\installer.iss"
+          Get-ChildItem packaging\Output
+
+      # ------------------------------------------------------------- artifacts
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: yolo-annotator-${{ matrix.target }}
+          if-no-files-found: warn
+          path: |
+            node/dist/*.dmg
+            node/dist/*.zip
+            node/packaging/Output/*.exe
+
+  release:
+    name: Attach release assets
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+          generate_release_notes: true

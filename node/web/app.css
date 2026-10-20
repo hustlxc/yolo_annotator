@@ -1,0 +1,634 @@
+/* YOLO Annotator — browser UI styles
+   Dark, high-contrast surface: the annotations have to stay readable on top of
+   arbitrary photographs, and the surrounding chrome must not compete with them. */
+
+:root {
+  color-scheme: dark;
+  --bg: #0b0f19;
+  --surface: #131a29;
+  --surface-2: #1b2436;
+  --border: #26314a;
+  --text: #e6ebf5;
+  --muted: #92a0bb;
+  --accent: #4ade80;
+  --accent-dim: #1e6b40;
+  --danger: #f87171;
+  --warn: #fbbf24;
+  --radius: 8px;
+  --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    "Noto Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  overflow: hidden;
+}
+
+kbd {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.fatal {
+  padding: 24px;
+  font-size: 16px;
+}
+
+/* ---------------------------------------------------------------- layout */
+
+.app {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  height: 100%;
+}
+
+.app[hidden] {
+  display: none;
+}
+
+.body {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 0;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 14px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.topbar__title {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+}
+
+.brand {
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.path {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar__meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.pill {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.pill[data-state="saved"] {
+  color: var(--accent);
+  border-color: var(--accent-dim);
+}
+
+.pill[data-state="saving"] {
+  color: var(--warn);
+}
+
+.pill[data-state="error"] {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+/* --------------------------------------------------------------- sidebar */
+
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.panel h2 {
+  margin: 0 0 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.panel--grow {
+  margin-top: auto;
+}
+
+.panel__hint,
+.panel__source {
+  margin: 4px 0 8px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.panel__source {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  word-break: break-all;
+  opacity: 0.75;
+}
+
+.classes,
+.groups,
+.boxes,
+.warnings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.classes li,
+.groups li,
+.boxes li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  min-width: 0;
+}
+
+.classes li:hover,
+.groups li:hover,
+.boxes li:hover {
+  background: var(--surface-2);
+}
+
+.classes li[aria-current="true"],
+.groups li[aria-current="true"],
+.boxes li[aria-current="true"] {
+  background: var(--surface-2);
+  border-color: var(--accent-dim);
+}
+
+.swatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  flex: none;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+.class-index,
+.box-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  flex: none;
+}
+
+.class-name,
+.group-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.class-count,
+.group-count,
+.box-dims {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--muted);
+  flex: none;
+}
+
+.group-count[data-complete="true"] {
+  color: var(--accent);
+}
+
+.progress__bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.progress__bar span {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  transition: width 0.2s ease;
+}
+
+.progress__text {
+  margin: 6px 0 0;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.warnings {
+  margin-top: 8px;
+  gap: 4px;
+}
+
+.warnings li {
+  font-size: 11px;
+  color: var(--warn);
+  line-height: 1.45;
+}
+
+/* ----------------------------------------------------------------- stage */
+
+.stage {
+  position: relative;
+  overflow: hidden;
+  background:
+    repeating-conic-gradient(#12161f 0% 25%, #171c27 0% 50%) 50% / 24px 24px;
+  display: grid;
+  place-items: center;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+/*
+ * Cursors describe the primary action: drawing a box. Panning is a modifier
+ * (Space/Alt/middle-drag) or the explicit pan-mode toggle, so it never silently
+ * replaces drawing — least of all when zoomed in, which is exactly when precise
+ * drawing matters most.
+ */
+.stage[data-pan="true"],
+.stage[data-space="true"],
+.stage[data-panning="true"] {
+  cursor: grab;
+}
+
+.stage[data-panning="true"] {
+  cursor: grabbing;
+}
+
+/* ...except over a box, where a drag moves the box instead. */
+.stage[data-over="true"] {
+  cursor: move;
+}
+
+#canvas {
+  display: block;
+  outline: none;
+  image-rendering: auto;
+}
+
+.zoombar {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px;
+  border-radius: var(--radius);
+  background: rgba(11, 15, 25, 0.82);
+  border: 1px solid var(--border);
+  backdrop-filter: blur(6px);
+}
+
+.zoombar__divider {
+  width: 1px;
+  align-self: stretch;
+  margin: 2px 1px;
+  background: var(--border);
+}
+
+/* The zoom readout doubles as the "fit to window" button. */
+#zoom-value {
+  min-width: 48px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.button--toggle[aria-pressed="true"] {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(11, 15, 25, 0.86);
+  text-align: center;
+  padding: 32px;
+}
+
+.overlay[hidden] {
+  display: none;
+}
+
+.overlay p {
+  font-size: 15px;
+  line-height: 1.6;
+  max-width: 34em;
+  margin: 0;
+}
+
+/* ------------------------------------------------------------ status bar */
+
+.statusbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 6px 14px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--muted);
+  min-height: 30px;
+}
+
+.statusbar__spacer {
+  flex: 1;
+}
+
+#status-message[data-kind="error"] {
+  color: var(--danger);
+}
+
+#status-message[data-kind="warn"] {
+  color: var(--warn);
+}
+
+#status-message[data-kind="ok"] {
+  color: var(--accent);
+}
+
+/* --------------------------------------------------------------- buttons */
+
+.button {
+  font: inherit;
+  font-size: 12px;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.button:hover {
+  border-color: var(--muted);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.button--primary {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+
+.button--danger {
+  background: transparent;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.button--danger:hover {
+  background: rgb(248 113 113 / 0.12);
+  border-color: var(--danger);
+}
+
+.button--quiet {
+  background: transparent;
+}
+
+.button--icon {
+  padding: 3px 9px;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+/* --------------------------------------------------------------- dialogs */
+
+.dialog {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 20px;
+  min-width: 340px;
+  max-width: 92vw;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+}
+
+.dialog::backdrop {
+  background: rgba(4, 7, 13, 0.65);
+}
+
+.dialog h2 {
+  margin: 0 0 10px;
+  font-size: 15px;
+}
+
+.dialog__hint {
+  margin: 0 0 10px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.dialog input[type="text"] {
+  font: inherit;
+  font-family: var(--mono);
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.dialog input[type="text"]:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.shortcuts {
+  border-collapse: collapse;
+  font-size: 12.5px;
+  width: 100%;
+}
+
+.shortcuts th {
+  text-align: left;
+  font-family: var(--mono);
+  font-weight: 500;
+  color: var(--accent);
+  padding: 4px 14px 4px 0;
+  white-space: nowrap;
+  vertical-align: top;
+}
+
+.shortcuts td {
+  color: var(--muted);
+  padding: 4px 0;
+}
+
+/* --------------------------------------------------------------- narrow */
+
+@media (max-width: 860px) {
+  .body {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  .sidebar {
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    max-height: 40vh;
+  }
+
+  .sidebar .panel {
+    min-width: 200px;
+  }
+
+  .panel--grow {
+    margin-top: 0;
+  }
+}
+
+/* ----------------------------------------------------- dataset picker screen */
+
+/*
+ * Shown while no dataset is open. It covers the canvas, so a first-run user
+ * cannot mistake an empty stage for a broken app, and it is reachable again
+ * from the toolbar to switch folders.
+ */
+.setup {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--bg);
+  z-index: 5;
+}
+
+.setup[hidden] {
+  display: none;
+}
+
+.setup__card {
+  width: min(560px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+
+.setup__card h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.setup__hint {
+  margin: 0 0 18px;
+  color: var(--muted);
+  line-height: 1.6;
+  font-size: 13px;
+}
+
+.setup__paths {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+  margin: 0 0 20px;
+  font-size: 12px;
+}
+
+.setup__paths dt {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10.5px;
+  padding-top: 2px;
+}
+
+.setup__paths dd {
+  margin: 0;
+  font-family: var(--mono);
+  word-break: break-all;
+  color: var(--text);
+}
+
+.setup__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.setup__error {
+  margin: 14px 0 0;
+  color: var(--danger);
+  font-size: 12.5px;
+  line-height: 1.5;
+}

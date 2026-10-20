@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>YOLO Annotator</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/app.css" />
+    <script>
+      window.__YOLO__ = __YOLO_BOOTSTRAP__;
+    </script>
+  </head>
+  <body>
+    <noscript>
+      <p class="fatal">This annotator needs JavaScript enabled.</p>
+    </noscript>
+
+    <div class="app" id="app" hidden>
+      <header class="topbar">
+        <div class="topbar__title">
+          <span class="brand">YOLO Annotator</span>
+          <span class="path" id="image-path" title=""></span>
+        </div>
+        <div class="topbar__meta">
+          <span class="pill" id="image-counter">–</span>
+          <span class="pill" id="image-size">–</span>
+          <span class="pill" id="save-state" data-state="idle">saved</span>
+          <button type="button" class="button" id="dataset-button" title="Choose the images folder and classes file">
+            Choose&nbsp;dataset&nbsp;…
+          </button>
+          <button type="button" class="button" id="jump-button" title="Jump to image (j)">
+            Jump&nbsp;to&nbsp;…
+          </button>
+          <button type="button" class="button" id="help-button" title="Keyboard shortcuts (?)">
+            ?
+          </button>
+          <button type="button" class="button button--quiet" id="quit-button" title="Save and quit (Esc)">
+            Quit
+          </button>
+        </div>
+      </header>
+
+      <div class="body">
+        <aside class="sidebar" id="sidebar">
+          <section class="panel">
+            <h2>Classes</h2>
+            <p class="panel__hint">
+              <kbd>c</kbd> cycles, <kbd>1</kbd>–<kbd>9</kbd> pick directly. With a box
+              selected this <em>relabels that box</em>; otherwise it sets the class the
+              next box will use. Clicking a class below does the same.
+            </p>
+            <ul class="classes" id="class-list"></ul>
+            <p class="panel__source" id="classes-source"></p>
+          </section>
+
+          <section class="panel">
+            <h2>Groups</h2>
+            <ul class="groups" id="group-list"></ul>
+          </section>
+
+          <section class="panel">
+            <h2>Boxes</h2>
+            <ul class="boxes" id="box-list"></ul>
+            <p class="panel__hint" id="boxes-empty">No boxes yet. Drag on the image to draw one.</p>
+          </section>
+
+          <section class="panel panel--grow">
+            <h2>Progress</h2>
+            <div class="progress">
+              <div class="progress__bar"><span id="progress-fill"></span></div>
+              <p class="progress__text" id="progress-text">–</p>
+            </div>
+            <ul class="warnings" id="warning-list"></ul>
+          </section>
+        </aside>
+
+        <main class="stage" id="stage">
+          <div class="setup" id="setup">
+            <div class="setup__card">
+              <h2 id="setup-title">Choose your dataset</h2>
+              <p class="setup__hint" id="setup-hint">
+                Pick the folder that holds your images, then your classes file
+                (<code>obj.names</code>, one class name per line).
+              </p>
+              <dl class="setup__paths">
+                <dt>Images</dt>
+                <dd id="setup-images">not chosen</dd>
+                <dt>Classes</dt>
+                <dd id="setup-classes">not chosen</dd>
+              </dl>
+              <div class="setup__actions">
+                <button type="button" class="button" id="setup-pick-images">Choose images folder…</button>
+                <button type="button" class="button" id="setup-pick-classes">Choose classes file…</button>
+                <button type="button" class="button button--primary" id="setup-open" disabled>Open dataset</button>
+              </div>
+              <p class="setup__error" id="setup-error" hidden></p>
+            </div>
+          </div>
+          <canvas id="canvas" tabindex="0" aria-label="Annotation canvas"></canvas>
+          <div class="zoombar">
+            <button
+              type="button"
+              class="button button--icon button--toggle"
+              id="pan-mode"
+              title="Pan mode: drag anywhere to move the view (p). Space-drag does this at any time."
+              aria-pressed="false"
+            >
+              ✋
+            </button>
+            <span class="zoombar__divider"></span>
+            <button type="button" class="button button--icon" id="zoom-out" title="Zoom out (-)">−</button>
+            <button type="button" class="button button--icon" id="zoom-value" title="Fit to window (0)">fit</button>
+            <button type="button" class="button button--icon" id="zoom-in" title="Zoom in (+)">+</button>
+          </div>
+          <div class="overlay" id="overlay" hidden>
+            <p id="overlay-text"></p>
+          </div>
+        </main>
+      </div>
+
+      <footer class="statusbar">
+        <span id="status-message">Loading…</span>
+        <span class="statusbar__spacer"></span>
+        <span id="status-hint">
+          drag&nbsp;=&nbsp;box&nbsp;·&nbsp;<kbd>n</kbd>/<kbd>p</kbd>&nbsp;navigate&nbsp;·&nbsp;<kbd>c</kbd>&nbsp;class&nbsp;·&nbsp;<kbd>d</kbd>&nbsp;delete&nbsp;·&nbsp;<kbd>0</kbd>&nbsp;fit&nbsp;·&nbsp;<kbd>Space</kbd>+drag&nbsp;pan&nbsp;·&nbsp;<kbd>?</kbd>&nbsp;help
+        </span>
+      </footer>
+    </div>
+
+    <dialog class="dialog" id="jump-dialog">
+      <form method="dialog">
+        <h2>Jump to image</h2>
+        <p class="dialog__hint" id="jump-hint"></p>
+        <input type="text" id="jump-input" autocomplete="off" spellcheck="false" />
+        <div class="dialog__actions">
+          <button type="button" class="button" id="jump-cancel">Cancel</button>
+          <button type="submit" class="button button--primary" id="jump-confirm">Jump</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="dialog" id="conflict-dialog">
+      <h2>This label file changed on disk</h2>
+      <p class="dialog__hint" id="conflict-message"></p>
+      <p class="dialog__hint" id="conflict-detail"></p>
+      <div class="dialog__actions">
+        <button type="button" class="button" id="conflict-reload" title="Discard your unsaved boxes and load the file from disk">
+          Use the file on disk
+        </button>
+        <button type="button" class="button button--danger" id="conflict-overwrite" title="Replace the file on disk with your boxes">
+          Overwrite with mine
+        </button>
+      </div>
+    </dialog>
+
+    <dialog class="dialog" id="help-dialog">
+      <form method="dialog">
+        <h2>Keyboard shortcuts</h2>
+        <table class="shortcuts">
+          <tbody>
+            <tr><th>n</th><td>next image</td></tr>
+            <tr><th>p</th><td>previous image</td></tr>
+            <tr><th>c</th><td>cycle to the next class</td></tr>
+            <tr><th>1 – 9</th><td>select class N directly</td></tr>
+            <tr><th>drag</th><td>draw a box with the active class — at any zoom level</td></tr>
+            <tr><th>drag a box</th><td>move that box</td></tr>
+            <tr><th>Space + drag</th><td>pan the view</td></tr>
+            <tr><th>Alt + drag</th><td>pan the view</td></tr>
+            <tr><th>h or the ✋ button</th><td>pan mode: drag anywhere to move the view (<kbd>Esc</kbd> leaves it)</td></tr>
+            <tr><th>click</th><td>select a box; click empty space to deselect</td></tr>
+            <tr><th>c / C</th><td>relabel the selected box (or choose the next class to draw with)</td></tr>
+            <tr><th>1 – 9</th><td>set the selected box's label directly, or pick the drawing class</td></tr>
+            <tr><th>d</th><td>delete the last box</td></tr>
+            <tr><th>Delete / Backspace</th><td>delete the selected box</td></tr>
+            <tr><th>arrow keys</th><td>nudge the selected box (Shift = 10 px, Alt = resize)</td></tr>
+            <tr><th>Ctrl/Cmd + Z</th><td>undo the last change, including a relabel</td></tr>
+            <tr><th>s</th><td>save now (saves are automatic)</td></tr>
+            <tr><th>+ / −</th><td>zoom in / out</td></tr>
+            <tr><th>0 or the % button</th><td>fit the image to the window</td></tr>
+            <tr><th>wheel</th><td>zoom at the cursor; Shift + wheel scrolls</td></tr>
+            <tr><th>?</th><td>toggle this panel</td></tr>
+            <tr><th>Esc</th><td>leave pan mode, or save and quit</td></tr>
+          </tbody>
+        </table>
+        <div class="dialog__actions">
+          <button type="submit" class="button button--primary">Close</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
